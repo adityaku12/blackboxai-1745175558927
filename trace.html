@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trace Location</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="max-w-xl w-full bg-white rounded-lg shadow-md p-8 text-center">
+    <h1 class="text-3xl font-semibold mb-6 text-gray-800">Location Tracker</h1>
+    <p id="status" class="mb-4 text-gray-600">Fetching your location...</p>
+    <div id="locationInfo" class="hidden">
+      <p class="text-lg font-medium text-gray-700">Your Location:</p>
+      <p id="latitude" class="text-gray-700"></p>
+      <p id="longitude" class="text-gray-700"></p>
+      <div id="map" class="mt-4 w-full h-64 rounded-lg shadow-md"></div>
+    </div>
+    <p id="errorMsg" class="text-red-600 mt-4 hidden"></p>
+  </div>
+
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function initMap(lat, lng) {
+      const mapDiv = document.getElementById('map');
+      const iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '100%';
+      iframe.style.border = 0;
+      iframe.loading = 'lazy';
+      iframe.allowFullscreen = '';
+      iframe.referrerPolicy = 'no-referrer-when-downgrade';
+      iframe.src = `https://www.google.com/maps/embed/v1/view?key=AIzaSyD-EXAMPLE-KEY&center=${lat},${lng}&zoom=14&maptype=roadmap`;
+      mapDiv.appendChild(iframe);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const status = document.getElementById('status');
+      const locationInfo = document.getElementById('locationInfo');
+      const errorMsg = document.getElementById('errorMsg');
+      const latitudeElem = document.getElementById('latitude');
+      const longitudeElem = document.getElementById('longitude');
+
+      const id = getQueryParam('id');
+      if (!id) {
+        status.textContent = 'Invalid tracking link.';
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        status.textContent = 'Geolocation is not supported by your browser.';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          status.classList.add('hidden');
+          locationInfo.classList.remove('hidden');
+          latitudeElem.textContent = `Latitude: ${position.coords.latitude.toFixed(6)}`;
+          longitudeElem.textContent = `Longitude: ${position.coords.longitude.toFixed(6)}`;
+          initMap(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          status.classList.add('hidden');
+          errorMsg.classList.remove('hidden');
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg.textContent = 'Permission denied. Please allow location access.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg.textContent = 'Location information is unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMsg.textContent = 'The request to get your location timed out.';
+              break;
+            default:
+              errorMsg.textContent = 'An unknown error occurred.';
+              break;
+          }
+        }
+      );
+    });
+  </script>
+</body>
+</html>
